@@ -103,7 +103,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random
 
 def create_model(batch_size, time_steps, n_features):
     model = Sequential()
-    model.add(LSTM(32, input_shape = (time_steps, n_features)))
+    model.add(LSTM(3, input_shape = (time_steps, n_features)))
     model.add(Dense(20, activation='linear'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
@@ -124,7 +124,6 @@ history = model.fit(X_train.reshape(n_samples, time_steps, n_features),
 # to plot make data frame out of dict history.history and use .plot() method
 pd.DataFrame(history.history).plot()
 pyplot.show()
-
 
 
 
