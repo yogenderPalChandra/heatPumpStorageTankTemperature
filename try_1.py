@@ -18,6 +18,13 @@ from keras.models import Sequential
 from keras.layers import LSTM
 from keras.layers import Dense
 
+epochs=20
+batch_size = 1
+time_steps = 3
+n_features = X_train.shape[1]
+n_samples = X_train.shape[0]
+
+
 path = "./dlOne"
 path_1 = "./dlone2"
 
@@ -27,8 +34,8 @@ df = pd.read_csv(path,
                  header = 1, 
                  encoding = "ISO-8859-1", 
                  sep='\t', 
-                 skiprows=0,
-                 columns=col_names).dropna(axis="columns").astype(float)
+                 skiprows=0).dropna(axis=1).astype(float)
+df.columns = col_names
 df_tem = df.drop(columns = 'Hours')
 
 #plotting the hist to see seasonality
@@ -64,7 +71,7 @@ def series_to_supervised(df_tem, n_in=1, n_out=1, dropnan=True):
 	Returns:
 		Pandas DataFrame of series framed for supervised learning.
 	"""
-	n_vars = 1 if type(df_tem) is list else df_tem.shape[1]
+	n_vars = 1 if type(df_tem) is list else df_tem.shape[1] # n_vars is n_features
 	df = df_tem
 	cols, names = list(), list()
 	# input sequence (t-n, ... t-1)
@@ -88,7 +95,7 @@ def series_to_supervised(df_tem, n_in=1, n_out=1, dropnan=True):
 
 
 df_difference = df.diff().dropna(axis=0)
-data = series_to_supervised(df_difference)
+data = series_to_supervised(df_difference, n_in=time_steps)
 
 # # To check whats the data in lag+forward dat look like
 # data[['T1(t-1)', 'T1(t)']]
@@ -108,11 +115,7 @@ def create_model(batch_size, time_steps, n_features):
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
 
-epochs=20
-batch_size = 1
-time_steps = 1
-n_features = X_train.shape[1]
-n_samples = X_train.shape[0]
+
 model = create_model(batch_size, time_steps, n_features)
 
 history = model.fit(X_train.reshape(n_samples, time_steps, n_features),
