@@ -10,9 +10,9 @@ from keras.models import Sequential
 from keras.layers import LSTM
 from keras.layers import Dense
 path = "/home/yogender/Desktop/KaggleHousePricePrediction/dlTrnsys/dltrnsys/dlOne"
-path2 = "/home/yogender/Desktop/KaggleHousePricePrediction/dlTrnsys/dltrnsys/dlone2"
+#path2 = "/home/yogender/Desktop/KaggleHousePricePrediction/dlTrnsys/dltrnsys/dlone2"
 df = pd.read_csv(path, header = 1, encoding = "ISO-8859-1", sep='\t', skiprows=0)
-df2 = pd.read_csv(path2, header = 1, encoding = "ISO-8859-1", sep='\t', skiprows=0) 
+#df2 = pd.read_csv(path2, header = 1, encoding = "ISO-8859-1", sep='\t', skiprows=0) 
 ##heatToLoad = df.iloc[:, -5]
 ##heatToLoad = pd.to_numeric(heatToLoad)
 
@@ -130,6 +130,8 @@ X, y = scaled_data[:, 0:20], scaled_data[:, 20:]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
+
+#This function according to jospehuss inlput shape
 def func2reshape(x_train, x_test, yy_train, yy_test):
     X_train_reshaped = x_train.reshape(len(x_train), 20, 1)
     X_test_reshaped = x_test.reshape(len(x_test), 20, 1)
@@ -140,6 +142,7 @@ def func2reshape(x_train, x_test, yy_train, yy_test):
 X_train_reshaped, y_train_reshaped, X_test_reshaped, y_test_reshaped=func2reshape(X_train, X_test, y_train, y_test)
 
 
+#this function according to my understanding:
 def func2reshape(x_train, x_test, yy_train, yy_test):
     X_train_reshaped = x_train.reshape(1,len(x_train), 20)
     X_test_reshaped = x_test.reshape(1, len(x_test), 20)
@@ -155,6 +158,8 @@ X_train_reshaped, y_train_reshaped, X_test_reshaped, y_test_reshaped=func2reshap
 ##	scaler = scaler.fit(train)
 
 
+
+# here is the error as it says ouput target shouls have blah blah blah
 def fit_lstm(X_train, y_train):
     model = Sequential()
     model.add(LSTM(32, input_shape =(X_train.shape[1], X_train.shape[2])))
@@ -172,18 +177,18 @@ lstm_model = fit_lstm(X_train_reshaped, y_train_reshaped)
 
 
 
-def fit_lstm (l_df):
-    model = sequential()
-    model.add(LSTM(32), input_shape =(5760, 1))
-    
-    for i in l_dg:
-        X = i[0]
-        #.valued creates the underlying numpy array of the pandas df
-        #so that .reshape can be used
-        X = X.values
-        y = i[1]
-        y =y.values
-        X = X.rehaspe(1, X.shape[0], 1)
+##def fit_lstm (l_df):
+##    model = sequential()
+##    model.add(LSTM(32), input_shape =(5760, 1))
+##    
+##    for i in l_dg:
+##        X = i[0]
+##        #.valued creates the underlying numpy array of the pandas df
+##        #so that .reshape can be used
+##        X = X.values
+##        y = i[1]
+##        y =y.values
+##        X = X.rehaspe(1, X.shape[0], 1)
         
 
              
