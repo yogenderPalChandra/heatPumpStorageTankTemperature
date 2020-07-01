@@ -35,7 +35,7 @@ df_nrm = pd.DataFrame(df_nrm)
 # for ANN taking k last time-point m values create an ANN
 ##############################################
 
-k = 3
+k = 10
 n_values = 20
 
 n_input = k * n_values
@@ -76,23 +76,20 @@ idxs = [x[0] for x in y]
 y = np.array([np.array(x[1]) for x in y])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-def create_model(n_values):
+def create_model(n_input, n_values):
     model = Sequential()
     model.add(Dense(30, input_shape=(n_input,), activation='relu'))
     model.add(Dense(n_values, activation='linear'))
     model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
     return model
 
-yhat=model.predict(X_test)
 
-plt.scatter(y_test, yhat)
-plt.show()
 
 ## fastest model!
 
 epochs = 18000
 batch_size = 300
-model = create_model(n_values)
+model = create_model(n_input, n_values)
 history = model.fit(X_train,
                     y_train,
                     epochs = epochs,
@@ -101,10 +98,14 @@ history = model.fit(X_train,
                     validation_data = (X_test, y_test))
 
 
+# batch_size = 1 was very slow,
+# the higher the batch_size the faster it became in training
+# and went down to 0.0012 even when training.
 
+yhat=model.predict(X_test)
 
-
-
+plt.scatter(y_test, yhat)
+plt.show()
 
 
 
