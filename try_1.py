@@ -13,16 +13,13 @@ from pandas import DataFrame
 from pandas import concat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from matplotlib import pyplot
 
 from keras.models import Sequential
 from keras.layers import LSTM
 from keras.layers import Dense
 
-epochs=20
-batch_size = 1
-time_steps = 3
-n_features = X_train.shape[1]
-n_samples = X_train.shape[0]
+
 
 
 path = "./dlOne"
@@ -38,8 +35,9 @@ df = pd.read_csv(path,
 df.columns = col_names
 df_tem = df.drop(columns = 'Hours')
 
+time_steps = 3 
 #plotting the hist to see seasonality
-from matplotlib import pyplot
+
 df_tem.hist()
 pyplot.show()
 
@@ -94,9 +92,15 @@ def series_to_supervised(df_tem, n_in=1, n_out=1, dropnan=True):
 	return agg
 
 
-df_difference = df.diff().dropna(axis=0)
+df_difference = df_tem.diff().dropna(axis=0)
 data = series_to_supervised(df_difference, n_in=time_steps)
 
+##cols, names = list(), list()
+##for i in range(3, 0, -1):
+##        cols.append(df_tem.shift(i))
+##        names += [('T%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
+##        print (names)
+	
 # # To check whats the data in lag+forward dat look like
 # data[['T1(t-1)', 'T1(t)']]
 
@@ -104,9 +108,17 @@ scaler = MinMaxScaler(feature_range=(-1, 1))
 scaler = scaler.fit(data)
 scaled_data = scaler.transform(data)
 
-X, y = scaled_data[:, 0:20], scaled_data[:, 20:]
+X, y = scaled_data[:, 0:60], scaled_data[:, 60:]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+
+
+
+epochs=20
+batch_size = 1
+time_steps = 3
+n_features = X_train.shape[1]
+n_samples = X_train.shape[0]
 
 def create_model(batch_size, time_steps, n_features):
     model = Sequential()

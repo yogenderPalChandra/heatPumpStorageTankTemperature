@@ -106,7 +106,13 @@ data[['T1(t-1)', 'T1(t)']]
 
 
 #creating a list of list of input/output payer
+
 def df2lol(df):
+    '''
+        can be done by: df.values.tolist()
+        
+        prefer f"string" over "string".format()
+    '''
     lol = []
     for i in range(1, 20):
         x = [df[['T{Y}(t-1)'.format(Y=i)]], df[['T{X}(t)'.format(X = i)]]]
@@ -175,6 +181,28 @@ def fit_lstm(X_train, y_train):
 
 lstm_model = fit_lstm(X_train_reshaped, y_train_reshaped)
 
+
+
+
+def create_model(batch_size, time_steps, n_features):
+    model = Sequential()
+    model.add(LSTM(4, input_shape = (time_steps, n_features)))
+    model.add(Dense(20, activation='linear'))
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
+    return model
+
+epochs=20
+batch_size = 1
+time_steps = 1
+n_features = X_train.shape[1]
+n_samples = X_train.shape[0]
+model = create_model(batch_size, time_steps, n_features)
+
+history = model.fit(X_train.reshape(n_samples, time_steps, n_features),
+                    y_train.reshape(n_samples, n_features),
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    verbose=2)
 
 
 ##def fit_lstm (l_df):
