@@ -64,7 +64,7 @@ def prepare_df(df, k):
 
 """
 df = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
-X, y = prepare_df(df)
+X, y = prepare_df(df, k)
 looks correct!
 
 last row is last y
@@ -82,25 +82,6 @@ def create_model(n_values):
     model.add(Dense(n_values, activation='linear'))
     model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
     return model
-
-# model = create_model(n_values)
-# 
-# history = model.fit(X_train,
-#                     y_train,
-#                     epochs = epochs,
-#                     batch_size = batch_size,
-#                     shuffle=True,
-#                     validation_data = (X_test, y_test))
-# 
-# epochs = 300
-# 
-# history1 = model.fit(X_train,
-#                     y_train,
-#                     epochs = epochs,
-#                     batch_size = batch_size,
-#                     shuffle=True,
-#                     validation_data = (X_test, y_test))
-# 
 
 yhat=model.predict(X_test)
 
