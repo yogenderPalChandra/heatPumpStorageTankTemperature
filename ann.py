@@ -85,24 +85,41 @@ def create_model(n_values):
     model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
     return model
 
-model = create_model(n_values)
+# model = create_model(n_values)
+# 
+# history = model.fit(X_train,
+#                     y_train,
+#                     epochs = epochs,
+#                     batch_size = batch_size,
+#                     shuffle=True,
+#                     validation_data = (X_test, y_test))
+# 
+# epochs = 300
+# 
+# history1 = model.fit(X_train,
+#                     y_train,
+#                     epochs = epochs,
+#                     batch_size = batch_size,
+#                     shuffle=True,
+#                     validation_data = (X_test, y_test))
+# 
 
+yhat=model.predict(X_test)
+
+plt.scatter(y_test, yhat)
+plt.show()
+
+## fastest model!
+
+epochs = 18000
+batch_size = 300
+model = create_model(n_values)
 history = model.fit(X_train,
                     y_train,
                     epochs = epochs,
                     batch_size = batch_size,
                     shuffle=True,
                     validation_data = (X_test, y_test))
-
-
-
-
-
-
-
-
-
-
 
 
 
