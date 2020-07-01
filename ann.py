@@ -56,12 +56,10 @@ def flatten_row_wise(df):
     """Take row by row and attach to one flat single row."""
     return np.ndarray.flatten(np.array(df))
 
-def prepare_df(df):
+def prepare_df(df, k):
     n_rows, n_cols = df.shape
     new_rows = np.array([flatten_row_wise(df.iloc[(i-k):i]) for i in range(k, n_rows)])
     new_ys = np.array([row for row in df.iloc[(k):, :].iterrows()])
-    # idxs = [x[0] for x in new_ys]
-    # new_ys = [x[1] for x in new_ys]
     return new_rows, new_ys
 
 """
@@ -73,7 +71,7 @@ last row is last y
 X doesn't contain last row and begins from first row!
 """
 
-X, y = prepare_df(df_nrm)
+X, y = prepare_df(df_nrm, k)
 idxs = [x[0] for x in y]
 y = np.array([np.array(x[1]) for x in y])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
