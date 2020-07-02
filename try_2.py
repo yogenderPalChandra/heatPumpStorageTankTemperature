@@ -5,6 +5,7 @@ from pandas import concat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from matplotlib import pyplot
+import matplotlib.pyplot as plt
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -140,6 +141,45 @@ y_pred_unscale, y_test_unscaled = unscale(yhat, y_test, scaler)
 
 
 
+def plot(arr_y_pred, arr_y_test, orig_df):
+    xdata = orig_df.iloc[4609:, 0]
+    df_y_pred = pd.DataFrame(arr_y_pred)
+    df_y_test = pd.DataFrame(arr_y_pred)
+    legends_test =['OrgT' + str(i) for i in range (1, 21) ]
+    legends_pred =['PrT' + str(i) for i in range (1, 21) ] 
+    for i, j in zip(df_y_pred, df_y_test):
+        plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
+        plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
+
+    plt.legend()
+    plt.show()
+    return
 
 
+plot(y_pred_orig, y_test_orig, orig_df)
 
+
+def plotOriginaldf(df):
+    xdata = df.iloc[:, 0]
+    for i in range(1, 20):
+        plt.plot(xdata, df.iloc[:, i])
+    plt.show()
+
+plotOriginaldf(orig_df)
+    
+        
+    
+def plotPredictedArr(arr_y_pred, orig_df):
+    xdata = orig_df.iloc[4609:, 0]
+    df_y_pred = pd.DataFrame(arr_y_pred)
+    for i in range(0, 20):
+        plt.plot(xdata, df_y_pred.iloc[:, i])
+    plt.show()
+
+plotPredictedArr(y_test_unscaled, orig_df)
+    
+
+def plotarrays (arr1, arr2):
+    n = len(arr1)
+    for i in range(n):
+        plt.plot(arr[i][])
