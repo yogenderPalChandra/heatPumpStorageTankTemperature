@@ -51,10 +51,10 @@ df_nrm = pd.DataFrame(df_nrm)
 # for LSTM taking k last time-point m values create an ANN
 ##############################################
 
-k = 3
+k = 2
 n_features = 20
 
-epochs=500
+epochs=400
 batch_size=100
 
 
@@ -100,7 +100,7 @@ history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
                     epochs=epochs,
                     batch_size=batch_size,
                     verbose=2)
-
+model.save("lstm.h5")
 # to plot make data frame out of dict history.history and use .plot() method
 pd.DataFrame(history.history).plot()
 pyplot.show()
