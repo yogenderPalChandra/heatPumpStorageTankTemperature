@@ -9,6 +9,7 @@
 
 
 import pandas as pd
+import numpy as np
 from pandas import DataFrame
 from pandas import concat
 from sklearn.model_selection import train_test_split
@@ -16,14 +17,70 @@ from sklearn.preprocessing import MinMaxScaler
 from matplotlib import pyplot
 
 from keras.models import Sequential
-from keras.layers import LSTM
-from keras.layers import Dense
+from keras.layers import Dense, LSTM
+from numpy import loadtxt
+from keras.models import load_model
+
+
+def load_data():
+    path = "./dlOne"
+    col_names = ['Hours'] + ["T" + str(i) for i in range(1, 21)]
+    df = pd.read_csv(path, 
+                     header = 1, 
+                     encoding = "ISO-8859-1", 
+                     sep='\t', 
+                     skiprows=0).dropna(axis=1).astype(float)
+    df.columns = col_names
+    df_tem = df.drop(columns = 'Hours')
+    return df_tem, df
+
+def normalize(X):
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = scaler.fit(X)
+    scaled_data = scaler.transform(X)
+    return scaled_data, scaler
 
 
 
+df, orig_df = load_data()
+df_nrm, scaler = normalize(df)
+df_nrm = pd.DataFrame(df_nrm)
 
-path = "./dlOne"
-path_1 = "./dlone2"
+
+##############################################
+# for LSTM taking k last time-point m values create an ANN
+##############################################
+
+k = 3
+n_values = 20
+
+n_input = k * n_values
+
+epochs=300
+batch_size=3
+
+
+###############################################
+# take a data frame and generate sample input and output data
+###############################################
+
+"""
+Let's say data frame has n_rows and n_cols = n_values
+n_rows, n_cols = df.shape
+
+"""
+def flatten_row_wise(df):
+    """Take row by row and attach to one flat single row."""
+    return np.ndarray.flatten(np.array(df))
+
+def prepare_df(df):
+    n_rows, n_cols = df.shape
+    new_rows = np.array([flatten_row_wise(df.iloc[(i-k):i]) for i in range(k, n_rows)])
+    new_ys = np.array([row for row in df.iloc[(k):, :].iterrows()])
+    # idxs = [x[0] for x in new_ys]
+    # new_ys = [x[1] for x in new_ys]
+    return new_rows, new_ys
+
 
 col_names = ['Hours'] + ["T" + str(i) for i in range(1, 21)]
 
@@ -94,8 +151,7 @@ def series_to_supervised(df_tem, n_in=1, n_out=1, dropnan=True):
 epochs=20
 batch_size = 100
 time_steps = 3
-n_features = 20
-n_samples = X_train.shape[0]
+n_features = df_tem.shape[1]
 
 df_difference = df_tem.diff().dropna(axis=0)
 data = series_to_supervised(df_difference, n_in=time_steps)
