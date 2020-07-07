@@ -14,13 +14,19 @@ from pandas import DataFrame
 from pandas import concat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
 from numpy import loadtxt
 from keras.models import load_model
+from keras.callbacks import ModelCheckpoint
 
+# to control randomness!
+from numpy.random import seed
+seed(123)
+from tensorflow import set_random_seed
+set_random_seed(42)
 
 def load_data():
     path = "./dlOne"
@@ -51,10 +57,10 @@ df_nrm = pd.DataFrame(df_nrm)
 # for LSTM taking k last time-point m values create an ANN
 ##############################################
 
-k = 2
+k = 3
 n_features = 20
 
-epochs=400
+epochs=600
 batch_size=100
 
 
@@ -88,22 +94,77 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 def create_model(time_steps, n_features):
     model = Sequential()
-    model.add(LSTM(3, input_shape = (time_steps, n_features)))
+    model.add(LSTM(10, input_shape = (time_steps, n_features)))
     model.add(Dense(20, activation='linear'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
 
 model = create_model(k, n_features)
+model_fpath="lstm.h5"
+callbacks_list = [ ModelCheckpoint(filepath=model_fpath,
+                                   monitor="val_loss",
+                                   save_best_only=True,
+                                   mode="min")]
 
 history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
                     y_train.reshape(y_train.shape[0], n_features),
                     epochs=epochs,
                     batch_size=batch_size,
-                    verbose=2)
-model.save("lstm.h5")
+                    validation_split=0.3,
+                    callbacks = callbacks_list,
+                    verbose=1)
+
+
 # to plot make data frame out of dict history.history and use .plot() method
 pd.DataFrame(history.history).plot()
-pyplot.show()
+plt.show()
+
+
+###########################################
+# plot prediction
+###########################################
+model = load_model(model_fpath) # this loads the best saved model!
+yhat=model.predict(X_test.reshape(X_test.shape[0], k, n_features))
+
+
+def unscale(y_values, scaler):
+   return scaler.inverse_transform(y_values)
+
+y_pred_unscaled, y_test_unscaled = unscale(yhat, scaler), unscale(y_test, scaler)
+
+def plot(arr_y_pred, arr_y_test, orig_df):
+   xdata = orig_df.iloc[4609:, 0]
+   df_y_pred = pd.DataFrame(arr_y_pred)
+   df_y_test = pd.DataFrame(arr_y_test) # arry_y_pred you took here!
+   legends_test =['OrgT' + str(i) for i in range (1, 21) ]
+   legends_pred =['PrT' + str(i) for i in range (1, 21) ]
+   for i, j in zip(df_y_pred, df_y_test):
+       plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
+       plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
+
+   plt.legend()
+   plt.show()
+   return
+
+plt.clf()
+plot(y_pred_unscaled, y_test_unscaled, orig_df)
+
+print(f"Best val_loss is: {min(history.history['val_loss'])}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
