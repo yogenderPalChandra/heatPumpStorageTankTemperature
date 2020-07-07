@@ -82,7 +82,7 @@ X doesn't contain last row and begins from first row!
 X, y = prepare_df(df_nrm)
 idxs = [x[0] for x in y]
 y = np.array([np.array(x[1]) for x in y])
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
 
 def create_model(n_values):
     model = Sequential()
@@ -100,7 +100,7 @@ history = model.fit(X_train,
                     shuffle=True,
                     validation_data = (X_test, y_test))
 
-model.save("model.h5")
+model.save("model_Falesshuffle.h5")
 print ("model saved")
 
 
@@ -117,6 +117,9 @@ plt.show()
 #     return y_pred_orig, y_test_orig
 # # well done! but better reusable would be a function which takes just each one.
 
+model = load_model('loss_0016_val_loss_0018_model')
+
+yhat=model.predict(X_test)
 
 def unscale(y_values, scaler):
     return scaler.inverse_transform(y_values)
@@ -160,6 +163,7 @@ def get_indexes(y_test, df_nrm):
     # the 20 values (in tuple!) and value are index of the row
     dct = {tuple(row): idx for idx, row in df_nrm.iterrows()} # one of few cases where iterrows() output (idx, row) is good!
     # note you can't use a list as key in dict - but by changing them to tuple, it works!
+    #print (dct)
     return [dct[tuple(row)] for row in y_test]
 
 # so, now you can get for each of the y_test rows and index.
@@ -175,6 +179,10 @@ def correct_order(test_array, actual_indexes):
     return np.array([test_array[dct[x]] for x in actual_indexes])
 
 y_test_corr, y_pred_corr = correct_order(y_test_unscaled, y_test_indexes), correct_order(y_pred_unscaled, y_test_indexes)
+
+##def correct_correct_order(test_array, actual_indexes):
+##    dct = {i: x for i, x in enumerate(actual_indexes)}
+##    return np.array([test_array[x] for x in actual_indexes])
 
 # now, with corrected order, we can plot
 plot(y_pred_corr, y_test_corr, orig_df)
@@ -224,7 +232,9 @@ plot(yhat, y_test, df_nrm) # that now looks right! Now make point size smaller
 def plot(arr_y_pred, arr_y_test, df_nrm):
     y_test_indexes = get_indexes(arr_y_test, df_nrm)
     y_test_unscaled, y_pred_unscaled = unscale(arr_y_test, scaler), unscale(arr_y_pred, scaler)
-    y_test_corr, y_pred_corr = correct_order(y_test_unscaled, y_test_indexes), correct_order(y_pred_unscaled, y_test_indexes)
+    #y_test_corr, y_pred_corr = correct_order(y_test_unscaled, y_test_indexes), correct_order(y_pred_unscaled, y_test_indexes)
+    y_test_corr = y_test_unscaled
+    y_pred_corr = y_pred_unscaled
     df_y_pred = pd.DataFrame(y_pred_corr)
     df_y_test = pd.DataFrame(y_test_corr)
     legends_test =['OrgT' + str(i) for i in range (1, 21) ]

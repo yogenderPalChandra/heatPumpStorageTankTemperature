@@ -8,9 +8,6 @@ from matplotlib import pyplot
 
 from keras.models import Sequential
 from keras.layers import Dense
-from numpy import loadtxt
-from keras.models import load_model
-
 
 def load_data():
     path = "./dlOne"
@@ -30,7 +27,11 @@ def normalize(X):
     scaled_data = scaler.transform(X)
     return scaled_data, scaler
 
-
+def normalize(X):
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = scaler.fit(X)
+    scaled_data = scaler.transform(X)
+    return scaled_data, scaler
 
 df, orig_df = load_data()
 df_nrm, scaler = normalize(df)
@@ -45,8 +46,8 @@ n_values = 20
 
 n_input = k * n_values
 
-epochs=300
-batch_size=3
+epochs=150
+batch_size=1
 
 ###############################################
 # take a data frame and generate sample input and output data
@@ -64,13 +65,15 @@ def flatten_row_wise(df):
 def prepare_df(df):
     n_rows, n_cols = df.shape
     new_rows = np.array([flatten_row_wise(df.iloc[(i-k):i]) for i in range(k, n_rows)])
+    #iterrows produces a tuple of index and row of df.
+    #so new_ys produces tuple if index and row
     new_ys = np.array([row for row in df.iloc[(k):, :].iterrows()])
     # idxs = [x[0] for x in new_ys]
     # new_ys = [x[1] for x in new_ys]
     return new_rows, new_ys
 
 """
-df = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
+df1 = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
 X, y = prepare_df(df)
 looks correct!
 
@@ -90,53 +93,46 @@ def create_model(n_values):
     model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
     return model
 
-model = create_model(n_values)
-
-history = model.fit(X_train,
-                    y_train,
-                    epochs = epochs,
-                    batch_size = batch_size,
-                    shuffle=True,
-                    validation_data = (X_test, y_test))
-
-model.save("model.h5")
-print ("model saved")
-
-
-
-
-
-epochs = 1200
-batch_size = 200
-model = create_model(n_values)
-
-history = model.fit(X_train,
-                    y_train,
-                    epochs = epochs,
-                    batch_size = batch_size,
-                    shuffle=True,
-                    validation_data = (X_test, y_test))
-
-
-
-
-
-model = load_model('loss_0016_val_loss_0018_model')
-
+# model = create_model(n_values)
+# 
+# history = model.fit(X_train,
+#                     y_train,
+#                     epochs = epochs,
+#                     batch_size = batch_size,
+#                     shuffle=True,
+#                     validation_data = (X_test, y_test))
+# 
+# epochs = 300
+# 
+# history1 = model.fit(X_train,
+#                     y_train,
+#                     epochs = epochs,
+#                     batch_size = batch_size,
+#                     shuffle=True,
+#                     validation_data = (X_test, y_test))
+# 
 
 yhat=model.predict(X_test)
 
 plt.scatter(y_test, yhat)
 plt.show()
 
-def unscale(y_pred, y_test, scaler):
-    
-    y_pred_orig = scaler.inverse_transform(yhat)
-    y_test_orig = scaler.inverse_transform(y_test)
+## fastest model!
 
-    return y_pred_orig, y_test_orig
+epochs = 18000
+batch_size = 300
+model = create_model(n_values)
+history = model.fit(X_train,
+                    y_train,
+                    epochs = epochs,
+                    batch_size = batch_size,
+                    shuffle=True,
+                    validation_data = (X_test, y_test))
 
-y_pred_unscale, y_test_unscaled = unscale(yhat, y_test, scaler)
+
+
+
+
 
 
 
