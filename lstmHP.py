@@ -140,10 +140,31 @@ y_output_test  = y_output[test_indexes, :]
 
 
 
+
+
+
+
+
+# to control randomness!
+np_seed=123
+tf_seed=42
+
+from numpy.random import seed
+seed(np_seed)
+
+try:
+    from tensorflow.random import set_seed 
+    set_seed(tf_seed)
+except:
+    from tensorflow import set_random_seed # in josephus' machine necessary
+    set_random_seed(tf_seed)
+
+
+
+
 def create_model(time_steps, n_input_features, n_output_features):
     model = Sequential()
-    model.add(LSTM(3, input_shape = (time_steps, n_input_features // time_steps)))
-    model.add(Dense(30, activation='relu'))
+    model.add(LSTM(20, input_shape = (time_steps, n_input_features // time_steps)))
     model.add(Dense(n_output_features, activation='linear'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
@@ -165,7 +186,8 @@ history = model.fit(X_input_train.reshape(X_input_train.shape[0], k, n_input_fea
                     verbose=1)
 
 print(f"Best val_loss is: {min(history.history['val_loss'])}")
-# Best val_loss is: 0.008256133942876292
+# Best val_loss is: 0.0069870187439511
+
 # 
 
 
