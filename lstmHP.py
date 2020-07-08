@@ -54,11 +54,18 @@ def load_dataHP():
                      skiprows=0).dropna(axis=1).astype(float)
     df_hp = df_hp.loc[:, df_hp.any()]
     df_hp.columns = col_names
+    df_hp = df_hp.drop(columns = 'Hours')
     #df_hp.replace(0,np.nan).dropna(axis=1,how="all")
     #df_tem = df.drop(columns = 'Hours')
     return df_hp
 df_hp = load_dataHP()
 
+#df1 = pd.merge(df_hp[['Tamb']], how="left")
+
+##df1 = pd.concat([df_hp[['Tamb']], df], axis =1)
+##
+##df2 = pd.concat([df_hp[['KJ/hr', 'cop']], df], axis = 1)
+##df3 = pd.concat([df_hp[['Tamb','KJ/hr', 'cop']], df], axis =1)
     
 def normalize(X):
     scaler = MinMaxScaler(feature_range=(-1, 1))
@@ -73,13 +80,21 @@ df_nrm, scaler = normalize(df)
 df_nrm = pd.DataFrame(df_nrm)
 dfhp_nrm, scaler = normalize(df_hp)
 dfhp_nrm = pd.DataFrame(dfhp_nrm)
+df3, df3scaler = normalize(df3)
+
+
+df3 = pd.DataFrame(df3)
+
+df1 = pd.concat([df3.iloc[:, 0], df3.iloc[:, 3:]], axis =1)
+
+df2 = pd.concat([df3.iloc[:, 1:3], df3.iloc[:, 3:]], axis =1)
 
 ##############################################
 # for LSTM taking k last time-point m values create an ANN
 ##############################################
 
 k = 3
-n_features = 20
+n_features = 21
 
 epochs=600
 batch_size=100
@@ -111,12 +126,17 @@ idxs = [x[0] for x in y]
 y = np.array([np.array(x[1]) for x in y])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
 
+Xdf1, ydf1 = prepare_df(df1)
 
+Xdf2, ydf2 = prepare_df(df2)
 
+y_df2 = np.array([np.array(x[1]) for x in ydf2])
+
+#y = np.array([np.array(x[1]) for x in ydf1])
 def create_model(time_steps, n_features):
     model = Sequential()
     model.add(LSTM(10, input_shape = (time_steps, n_features)))
-    model.add(Dense(20, activation='linear'))
+    model.add(Dense(22, activation='linear'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
 
