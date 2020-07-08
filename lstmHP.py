@@ -164,7 +164,10 @@ except:
 
 def create_model(time_steps, n_input_features, n_output_features):
     model = Sequential()
-    model.add(LSTM(20, input_shape = (time_steps, n_input_features // time_steps)))
+    model.add(LSTM(3, input_shape = (time_steps, n_input_features // time_steps)))
+    model.add(Dense(30, activation='relu'))
+    model.add(Dense(n_output_features, activation='relu'))
+    model.add(Dense(30, activation='relu'))
     model.add(Dense(n_output_features, activation='linear'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
@@ -183,12 +186,12 @@ history = model.fit(X_input_train.reshape(X_input_train.shape[0], k, n_input_fea
                     batch_size=batch_size,
                     validation_split=0.3,
                     callbacks = callbacks_list,
+                    shuffle=True,
                     verbose=1)
 
 print(f"Best val_loss is: {min(history.history['val_loss'])}")
-# Best val_loss is: 0.0069870187439511
+# Best val_loss is: 0.011279674120215017
 
-# 
 
 
 
