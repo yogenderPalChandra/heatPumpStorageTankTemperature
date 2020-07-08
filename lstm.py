@@ -25,11 +25,13 @@ from keras.callbacks import ModelCheckpoint
 # to control randomness!
 from numpy.random import seed
 seed(123)
-from tensorflow import set_random_seed
-set_random_seed(42)
+#from tensorflow import set_random_seed
+#set_random_seed(42)
+import tensorflow
+tensorflow.random.set_seed(42)
 
 def load_data():
-    path = "./dlOne"
+    path = "./HPcalculation4"
     col_names = ['Hours'] + ["T" + str(i) for i in range(1, 21)]
     df = pd.read_csv(path, 
                      header = 1, 
