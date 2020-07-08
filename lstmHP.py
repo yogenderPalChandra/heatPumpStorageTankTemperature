@@ -25,10 +25,14 @@ from keras.callbacks import ModelCheckpoint
 # to control randomness!
 from numpy.random import seed
 seed(123)
-#from tensorflow import set_random_seed
-#set_random_seed(42)
-import tensorflow
-tensorflow.random.set_seed(42)
+
+seed_num=42
+try:
+    from tensorflow import set_random_seed # in josephus' computer
+    set_random_seed(seed_num)
+except:
+    from tensorflow.random import set_seed # in yogenders' computer
+    set_seed(seed_num)
 
 def load_data():
     path = "./dlOne"
@@ -41,7 +45,6 @@ def load_data():
     df.columns = col_names
     df_tem = df.drop(columns = 'Hours')
     return df_tem, df
-
 
 def load_dataHP():
     path = "./Hpdata"
@@ -58,8 +61,8 @@ def load_dataHP():
     #df_hp.replace(0,np.nan).dropna(axis=1,how="all")
     #df_tem = df.drop(columns = 'Hours')
     return df_hp
-df_hp = load_dataHP()
 
+<<<<<<< HEAD
 #df1 = pd.merge(df_hp[['Tamb']], how="left")
 
 ##df1 = pd.concat([df_hp[['Tamb']], df], axis =1)
@@ -67,19 +70,21 @@ df_hp = load_dataHP()
 ##df2 = pd.concat([df_hp[['KJ/hr', 'cop']], df], axis = 1)
 ##df3 = pd.concat([df_hp[['Tamb','KJ/hr', 'cop']], df], axis =1)
     
+=======
+>>>>>>> 6c80172e6798ee07987a61f5a0122376e5faf5c4
 def normalize(X):
     scaler = MinMaxScaler(feature_range=(-1, 1))
     scaler = scaler.fit(X)
     scaled_data = scaler.transform(X)
     return scaled_data, scaler
 
-
-
 df, orig_df = load_data()
 df_nrm, scaler = normalize(df)
 df_nrm = pd.DataFrame(df_nrm)
+df_hp = load_dataHP()
 dfhp_nrm, scaler = normalize(df_hp)
 dfhp_nrm = pd.DataFrame(dfhp_nrm)
+<<<<<<< HEAD
 df3, df3scaler = normalize(df3)
 
 
@@ -88,6 +93,12 @@ df3 = pd.DataFrame(df3)
 df1 = pd.concat([df3.iloc[:, 0], df3.iloc[:, 3:]], axis =1)
 
 df2 = pd.concat([df3.iloc[:, 1:3], df3.iloc[:, 3:]], axis =1)
+=======
+dfhp_nrm.columns = df_hp.columns
+
+all(df_hp.loc[:, 'Hours'] == orig_df.loc[:, 'Hours']) # True
+# thus the two dfs can be merged
+>>>>>>> 6c80172e6798ee07987a61f5a0122376e5faf5c4
 
 ##############################################
 # for LSTM taking k last time-point m values create an ANN
