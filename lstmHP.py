@@ -50,7 +50,6 @@ def load_data():
 
 def load_dataHP():
     path = "./Hpdata"
-    #col_names = ['Hours'] + ["T" + str(i) for i in range(1, 21)]
     col_names = ['Hours', 'Tamb', 'ThpOut', 'mLoadFlowRate', 'KJ/hr' , 'cop']
     df_hp = pd.read_csv(path, 
                      header = 1, 
@@ -60,8 +59,6 @@ def load_dataHP():
     df_hp = df_hp.loc[:, df_hp.any()]
     df_hp.columns = col_names
     df_hp = df_hp.drop(columns = 'Hours')
-    #df_hp.replace(0,np.nan).dropna(axis=1,how="all")
-    #df_tem = df.drop(columns = 'Hours')
     return df_hp
     
 def normalize(X):
