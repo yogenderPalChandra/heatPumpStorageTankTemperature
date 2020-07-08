@@ -25,14 +25,10 @@ from keras.callbacks import ModelCheckpoint
 # to control randomness!
 from numpy.random import seed
 seed(123)
-
-seed_num=42
-try:
-    from tensorflow import set_random_seed # in josephus' computer
-    set_random_seed(seed_num)
-except:
-    from tensorflow.random import set_seed # in yogenders' computer
-    set_seed(seed_num)
+#from tensorflow import set_random_seed
+#set_random_seed(42)
+import tensorflow
+tensorflow.random.set_seed(42)
 
 def load_data():
     path = "./dlOne"
@@ -46,6 +42,7 @@ def load_data():
     df_tem = df.drop(columns = 'Hours')
     return df_tem, df
 
+
 def load_dataHP():
     path = "./Hpdata"
     #col_names = ['Hours'] + ["T" + str(i) for i in range(1, 21)]
@@ -57,9 +54,38 @@ def load_dataHP():
                      skiprows=0).dropna(axis=1).astype(float)
     df_hp = df_hp.loc[:, df_hp.any()]
     df_hp.columns = col_names
+    df_hp = df_hp.drop(columns = 'Hours')
     #df_hp.replace(0,np.nan).dropna(axis=1,how="all")
     #df_tem = df.drop(columns = 'Hours')
     return df_hp
+
+#df1 = pd.merge(df_hp[['Tamb']], how="left")
+
+##df1 = pd.concat([df_hp[['Tamb']], df], axis =1)
+##
+##df2 = pd.concat([df_hp[['KJ/hr', 'cop']], df], axis = 1)
+##df3 = pd.concat([df_hp[['Tamb','KJ/hr', 'cop']], df], axis =1)
+    
+def normalize(X):
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = scaler.fit(X)
+    scaled_data = scaler.transform(X)
+    return scaled_data, scaler
+
+
+
+df, orig_df = load_data()
+df_hp = load_dataHP()
+##df_nrm, scaler = normalize(df)
+##df_nrm = pd.DataFrame(df_nrm)
+##dfhp_nrm, scaler = normalize(df_hp)
+##dfhp_nrm = pd.DataFrame(dfhp_nrm)
+##df3, df3scaler = normalize(df3)
+
+
+#df3 = pd.DataFrame(df3)
+
+df1 = pd.concat([df_hp.iloc[:, 0], df], axis =1)
 
 def normalize(X):
     scaler = MinMaxScaler(feature_range=(-1, 1))
@@ -67,23 +93,25 @@ def normalize(X):
     scaled_data = scaler.transform(X)
     return scaled_data, scaler
 
-df, orig_df = load_data()
-df_nrm, scaler = normalize(df)
-df_nrm = pd.DataFrame(df_nrm)
-df_hp = load_dataHP()
-dfhp_nrm, scaler = normalize(df_hp)
-dfhp_nrm = pd.DataFrame(dfhp_nrm)
-dfhp_nrm.columns = df_hp.columns
+df1_nrm, scaler_df1 = normalize(df1)
 
-all(df_hp.loc[:, 'Hours'] == orig_df.loc[:, 'Hours']) # True
-# thus the two dfs can be merged
+
+df2 = pd.concat([df_hp.iloc[:, 1:3], df], axis =1)
+
+def normalize(X):
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = scaler.fit(X)
+    scaled_data = scaler.transform(X)
+    return scaled_data, scaler
+
+df2_nrm, scaler_df2 = normalize(df2)
 
 ##############################################
 # for LSTM taking k last time-point m values create an ANN
 ##############################################
 
 k = 3
-n_features = 20
+n_features = 21
 
 epochs=600
 batch_size=100
@@ -115,8 +143,19 @@ idxs = [x[0] for x in y]
 y = np.array([np.array(x[1]) for x in y])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
 
+Xdf1, ydf1 = prepare_df(df1)
 
+Xdf2, ydf2 = prepare_df(df2)
 
+#takingX values from df1 and taking y values of df2 
+
+y_df2 = np.array([np.array(x[1]) for x in ydf2])
+
+X_train, X_test, y_train, y_test = train_test_split(Xdf1, y_df2, test_size=0.2, random_state=42, shuffle=False)
+
+#y = np.array([np.array(x[1]) for x in ydf1])
+
+'''
 def create_model(time_steps, n_features):
     model = Sequential()
     model.add(LSTM(10, input_shape = (time_steps, n_features)))
@@ -139,6 +178,30 @@ history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
                     callbacks = callbacks_list,
                     verbose=1)
 
+'''
+
+def create_model(time_steps, n_features):
+    model = Sequential()
+    model.add(LSTM(10, input_shape = (time_steps, n_features)))
+    model.add(Dense(22, activation='linear'))
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
+    return model
+
+model = create_model(k, n_features)
+model_fpath="lstmHPHP.h5"
+callbacks_list = [ ModelCheckpoint(filepath=model_fpath,
+                                   monitor="val_loss",
+                                   save_best_only=True,
+                                   mode="min")]
+
+
+history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
+                    y_train.reshape(y_train.shape[0], 22),
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    validation_split=0.3,
+                    callbacks = callbacks_list,
+                    verbose=1)
 
 # to plot make data frame out of dict history.history and use .plot() method
 pd.DataFrame(history.history).plot()
@@ -155,14 +218,14 @@ yhat=model.predict(X_test.reshape(X_test.shape[0], k, n_features))
 def unscale(y_values, scaler):
    return scaler.inverse_transform(y_values)
 
-y_pred_unscaled, y_test_unscaled = unscale(yhat, scaler), unscale(y_test, scaler)
+y_pred_unscaled, y_test_unscaled = unscale(yhat, scaler_df2), unscale(y_test, scaler_df2)
 
 def plot(arr_y_pred, arr_y_test, orig_df):
    xdata = orig_df.iloc[4609:, 0]
    df_y_pred = pd.DataFrame(arr_y_pred)
    df_y_test = pd.DataFrame(arr_y_test) # arry_y_pred you took here!
-   legends_test =['OrgT' + str(i) for i in range (1, 21) ]
-   legends_pred =['PrT' + str(i) for i in range (1, 21) ]
+   legends_test =['OrgT' + str(i) for i in range (0, 22) ]
+   legends_pred =['PrT' + str(i) for i in range (0, 22) ]
    for i, j in zip(df_y_pred, df_y_test):
        plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
        plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
