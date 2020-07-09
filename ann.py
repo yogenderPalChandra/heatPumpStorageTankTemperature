@@ -35,21 +35,12 @@ batch_size=100
 X, y = prepare_df(df_nrm, k)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
 
-model = create_ann_30_model(n_input_features, n_output_features)
 
-history = model.fit(X_train,
-                    y_train,
-                    epochs = epochs,
-                    batch_size = batch_size,
-                    shuffle=True,
-                    validation_data = (X_test, y_test))
+## fastest model!
 
-
-
-epochs = 1200
-batch_size = 200
-model = create_ann_30_model(n_input_features, n_output_features)
-
+epochs = 18000
+batch_size = 300
+model = create_ann_30_model(n_input, n_values)
 history = model.fit(X_train,
                     y_train,
                     epochs = epochs,
@@ -58,16 +49,8 @@ history = model.fit(X_train,
                     validation_data = (X_test, y_test))
 model.save("model.h5")
 
-
-
-
 model = load_model('model.h5')
-
 prediction_vs_truth_plot(model, X_test, y_test, unscale=unscale, scaler=scaler)
-
-
-
-
 
 
 
