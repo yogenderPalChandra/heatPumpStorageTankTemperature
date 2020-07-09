@@ -40,7 +40,6 @@ def load_data():
 
 def load_dataHP():
     path = "./Hpdata"
-    #col_names = ['Hours'] + ["T" + str(i) for i in range(1, 21)]
     col_names = ['Hours', 'Tamb', 'ThpOut', 'mLoadFlowRate', 'KJ/hr' , 'cop']
     df_hp = pd.read_csv(path, 
                      header = 1, 
@@ -50,8 +49,6 @@ def load_dataHP():
     df_hp = df_hp.loc[:, df_hp.any()]
     df_hp.columns = col_names
     df_hp = df_hp.drop(columns = 'Hours')
-    #df_hp.replace(0,np.nan).dropna(axis=1,how="all")
-    #df_tem = df.drop(columns = 'Hours')
     return df_hp
 
 #df1 = pd.merge(df_hp[['Tamb']], how="left")
@@ -169,10 +166,42 @@ history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
 
 '''
 
+<<<<<<< HEAD
 def create_model(time_steps, n_features):
     model = Sequential()
     model.add(LSTM(10, input_shape = (time_steps, n_features)))
     model.add(Dense(22, activation='linear'))
+=======
+
+
+
+
+
+# to control randomness!
+np_seed=123
+tf_seed=42
+
+from numpy.random import seed
+seed(np_seed)
+
+try:
+    from tensorflow.random import set_seed 
+    set_seed(tf_seed)
+except:
+    from tensorflow import set_random_seed # in josephus' machine necessary
+    set_random_seed(tf_seed)
+
+
+
+
+def create_model(time_steps, n_input_features, n_output_features):
+    model = Sequential()
+    model.add(LSTM(3, input_shape = (time_steps, n_input_features // time_steps)))
+    model.add(Dense(30, activation='relu'))
+    model.add(Dense(n_output_features, activation='relu'))
+    model.add(Dense(30, activation='relu'))
+    model.add(Dense(n_output_features, activation='linear'))
+>>>>>>> bc50570bf8d14c5287e5901e3e90e6099797ca5e
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
 
@@ -190,8 +219,18 @@ history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
                     batch_size=batch_size,
                     validation_split=0.3,
                     callbacks = callbacks_list,
+                    shuffle=True,
                     verbose=1)
 
+<<<<<<< HEAD
+=======
+print(f"Best val_loss is: {min(history.history['val_loss'])}")
+# Best val_loss is: 0.011279674120215017
+
+
+
+
+>>>>>>> bc50570bf8d14c5287e5901e3e90e6099797ca5e
 # to plot make data frame out of dict history.history and use .plot() method
 pd.DataFrame(history.history).plot()
 plt.show()
