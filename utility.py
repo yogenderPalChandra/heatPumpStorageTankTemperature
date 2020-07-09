@@ -38,7 +38,7 @@ def flatten_row_wise(df):
     """Take row by row and attach to one flat single row."""
     return np.ndarray.flatten(np.array(df))
 
-def prepare_df(df):
+def prepare_df(df, k):
     n_rows, n_cols = df.shape
     new_rows = np.array([flatten_row_wise(df.iloc[(i-k):i]) for i in range(k, n_rows)])
     new_ys = np.array([row for row in df.iloc[(k):, :].itertuples(index=False)])
@@ -62,7 +62,7 @@ def create_ann_30_model(n_input_features, n_output_features):
     return model
 
 def unscale(y_pred, y_test, scaler):
-    y_pred_orig = scaler.inverse_transform(yhat)
+    y_pred_orig = scaler.inverse_transform(y_pred)
     y_test_orig = scaler.inverse_transform(y_test)
     return y_pred_orig, y_test_orig
 
@@ -105,9 +105,11 @@ def plot_losses(history):
     pd.DataFrame(history.history).plot()
     plt.show()
 
-def prediction_vs_truth_plot(model, X_test, y_test, unscale=unscale):
+def prediction_vs_truth_plot(model, X_test, y_test, scaler, unscale=unscale, out_fpath=None):
     yhat=model.predict(X_test)
     y_pred_unscaled, y_test_unscaled = unscale(yhat, y_test, scaler)
     plt.scatter(y_test_unscaled, y_pred_unscaled)
+    if out_fpath is not None:
+        plt.savefig(out_fpath)
     plt.show()
 

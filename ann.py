@@ -26,18 +26,16 @@ n_output_features = df_nrm.shape[1]
 n_input_features = k * n_output_features
 
 epochs=300
-batch_size=3
+batch_size=100
 
 ###############################################
 # take a data frame and generate sample input and output data
 ###############################################
 
-X, y = prepare_df(df_nrm)
-idxs = [x[0] for x in y]
-y = np.array([np.array(x[1]) for x in y])
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
+X, y = prepare_df(df_nrm, k)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
 
-model = create_model(n_input_features, n_output_features)
+model = create_ann_30_model(n_input_features, n_output_features)
 
 history = model.fit(X_train,
                     y_train,
@@ -45,17 +43,12 @@ history = model.fit(X_train,
                     batch_size = batch_size,
                     shuffle=True,
                     validation_data = (X_test, y_test))
-
-model.save("model.h5")
-print ("model saved")
-
-
 
 
 
 epochs = 1200
 batch_size = 200
-model = create_model(n_input_features, n_output_features)
+model = create_ann_30_model(n_input_features, n_output_features)
 
 history = model.fit(X_train,
                     y_train,
@@ -63,14 +56,14 @@ history = model.fit(X_train,
                     batch_size = batch_size,
                     shuffle=True,
                     validation_data = (X_test, y_test))
+model.save("model.h5")
 
 
 
 
+model = load_model('model.h5')
 
-model = load_model('loss_0016_val_loss_0018_model')
-
-prediction_vs_truth_plot(model, X_test, y_test, unscale=unscale)
+prediction_vs_truth_plot(model, X_test, y_test, unscale=unscale, scaler=scaler)
 
 
 
