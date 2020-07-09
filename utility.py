@@ -22,6 +22,21 @@ def load_data(fpath="./dlOne", col_names = ['Hours'] + ["T" + str(i) for i in ra
     df.columns = col_names
     return df.drop(columns = 'Hours'), df
 
+def load_dataHP():
+    path = "./Hpdata"
+    col_names = ['Hours', 'Tamb', 'ThpOut', 'mLoadFlowRate', 'KJ/hr' , 'cop']
+    df_hp = pd.read_csv(path, 
+                     header = 1, 
+                     encoding = "ISO-8859-1", 
+                     sep='\t', 
+                     skiprows=0).dropna(axis=1).astype(float)
+    df_hp = df_hp.loc[:, df_hp.any()]
+    df_hp.columns = col_names
+    df_hp = df_hp.drop(columns = 'Hours')
+    return df_hp
+
+
+
 def normalize(X):
     scaler = MinMaxScaler(feature_range=(-1, 1))
     scaler = scaler.fit(X)
@@ -61,6 +76,19 @@ def create_ann_30_model(n_input_features, n_output_features):
     model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
     return model
 
+def create_lstm_10_20_model(time_steps, n_features):
+    model = Sequential()
+    model.add(LSTM(10, input_shape = (time_steps, n_features)))
+    model.add(Dense(20, activation='linear'))
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
+    return model
+
+def get_callbacks(moedl_fpath):
+    return [ ModelCheckpoint(filepath=model_fpath,
+                                   monitor="val_loss",
+                                   save_best_only=True,
+                                   mode="min")]
+
 def unscale(y_pred, y_test, scaler):
     y_pred_orig = scaler.inverse_transform(y_pred)
     y_test_orig = scaler.inverse_transform(y_test)
@@ -72,6 +100,9 @@ def unscale_1(y_values, scaler):
    y_values_with_Tamb_fake = np.array([np.concatenate([row[:-2], np.array([1.0]), row[-2:]]) for row in y_values])
    res = scaler.inverse_transform(y_values_with_Tamb_fake)
    return np.array([np.concatenate([row[:-3], row[-2:]]) for row in res])
+
+def unscale_2(y_values, scaler):
+   return scaler.inverse_transform(y_values)
 
 def train_test_split_indexes(X, y, test_size=0.2, random_state=42, shuffle=False):
     X_train_indexes, X_test_indexes, y_train_indexes, y_test_indexes = train_test_split(pd.DataFrame(list(range(X.shape[0]))),
@@ -95,6 +126,21 @@ def plot(arr_y_pred, arr_y_test, orig_df):
    plt.legend()
    plt.show()
    return
+
+# def plot(arr_y_pred, arr_y_test, orig_df):
+#    xdata = orig_df.iloc[4609:, 0]
+#    df_y_pred = pd.DataFrame(arr_y_pred)
+#    df_y_test = pd.DataFrame(arr_y_test) # arry_y_pred you took here!
+#    legends_test =['OrgT' + str(i) for i in range (1, 21) ]
+#    legends_pred =['PrT' + str(i) for i in range (1, 21) ]
+#    for i, j in zip(df_y_pred, df_y_test):
+#        plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
+#        plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
+# 
+#    plt.legend()
+#    plt.show()
+#    return
+
 
 def minimal_val_loss(history):
     min_val_loss=min(history.history['val_loss'])
