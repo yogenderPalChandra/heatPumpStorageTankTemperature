@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
-from numpy import loadtxt
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint
 
@@ -22,7 +21,7 @@ def load_data(fpath="./dlOne", col_names = ['Hours'] + ["T" + str(i) for i in ra
     df.columns = col_names
     return df.drop(columns = 'Hours'), df
 
-def load_dataHP():
+def load_dataHP(path="./Hpdata"):
     path = "./Hpdata"
     col_names = ['Hours', 'Tamb', 'ThpOut', 'mLoadFlowRate', 'KJ/hr' , 'cop']
     df_hp = pd.read_csv(path, 
@@ -35,7 +34,9 @@ def load_dataHP():
     df_hp = df_hp.drop(columns = 'Hours')
     return df_hp
 
-
+def load_data_big(path="./dlone2"):
+    return load_dataHP(path)
+    
 
 def normalize(X):
     scaler = MinMaxScaler(feature_range=(-1, 1))
@@ -58,6 +59,13 @@ def prepare_df(df, k):
     new_rows = np.array([flatten_row_wise(df.iloc[(i-k):i]) for i in range(k, n_rows)])
     new_ys = np.array([row for row in df.iloc[(k):, :].itertuples(index=False)])
     return new_rows, new_ys
+
+def prepare_df_Q_t(X, y, k):
+    n_rows, n_cols = X.shape
+    nX = np.array([flatten_row_wise(X.iloc[(i-k):i]) for i in range(k, n_rows)])
+    ny = np.array([row for row in y.iloc[(k):, :].itertuples(index=False)])
+    return nX, ny
+    
 
 """
 df = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
@@ -83,7 +91,36 @@ def create_lstm_10_20_model(time_steps, n_features):
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
     return model
 
-def get_callbacks(moedl_fpath):
+def create_Q_t_model(X, y):
+    n_input_features = X.shape[1]
+    n_output_features = y.shape[1]
+    model = Sequential()
+    model.add(Dense(3, input_shape=(n_input_features,), activation='relu'))
+    model.add(Dense(n_output_features, activation='linear'))
+    model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
+    return model
+
+
+def create_Q_t_model(X, y):
+    n_input_features = X.shape[1]
+    n_output_features = y.shape[1]
+    model = Sequential()
+    model.add(Dense(3, input_shape=(n_input_features,), activation='relu'))
+    model.add(Dense(n_output_features, activation='linear'))
+    model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
+    return model
+
+def create_Q_t_model_1(X, y):
+    n_input_features = X.shape[1]
+    n_output_features = y.shape[1]
+    model = Sequential()
+    model.add(Dense(10, input_shape=(n_input_features,), activation='relu'))
+    model.add(Dense(5, input_shape=(n_input_features,), activation='relu'))
+    model.add(Dense(n_output_features, activation='linear'))
+    model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
+    return model
+
+def get_callbacks(model_fpath):
     return [ ModelCheckpoint(filepath=model_fpath,
                                    monitor="val_loss",
                                    save_best_only=True,
@@ -112,6 +149,14 @@ def train_test_split_indexes(X, y, test_size=0.2, random_state=42, shuffle=False
                                                                                         shuffle=shuffle)
     train_indexes, test_indexes = [x for x in X_train_indexes.iloc[:, 0]]  , [x for x in X_test_indexes.iloc[:, 0]]
     return sorted(train_indexes), sorted(test_indexes)
+
+def splitter(X, y, train_indexes, test_indexes):
+    X_train = X.iloc[train_indexes, :]
+    y_train = y.iloc[train_indexes, :]
+    X_test = X.iloc[test_indexes, :]
+    y_test = y.iloc[test_indexes, :]
+    return X_train, X_test, y_train, y_test
+
 
 def plot(arr_y_pred, arr_y_test, orig_df):
    xdata = orig_df.iloc[4609:, 0]
@@ -155,6 +200,18 @@ def prediction_vs_truth_plot(model, X_test, y_test, scaler, unscale=unscale, out
     yhat=model.predict(X_test)
     y_pred_unscaled, y_test_unscaled = unscale(yhat, y_test, scaler)
     plt.scatter(y_test_unscaled, y_pred_unscaled)
+    if out_fpath is not None:
+        plt.savefig(out_fpath)
+    plt.show()
+
+def prediction_vs_truth_plot_Q_t(model, X_test, y_test, scaler, unscale=unscale, out_fpath=None):
+    yhat=model.predict(X_test)
+    yhat_df = pd.DataFrame({"KJ/hr": [x[0] for x in yhat]})
+    yhat_df.index = X_test.index
+    yhat_df = pd.concat([X_test, yhat_df], axis=1) # why suddenly NaN?
+    ytest_df = pd.concat([X_test, pd.DataFrame(y_test)], axis=1)
+    y_pred_unscaled, y_test_unscaled = unscale(yhat_df, ytest_df, scaler)
+    plt.scatter(y_test_unscaled[:, -1], y_pred_unscaled[:, -1])
     if out_fpath is not None:
         plt.savefig(out_fpath)
     plt.show()

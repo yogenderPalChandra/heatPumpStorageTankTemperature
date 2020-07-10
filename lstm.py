@@ -25,7 +25,7 @@ try:
     from tensorflow import set_random_seed
     set_random_seed(tf_seed)
 except:
-    import tensorflow.random import set_seed
+    from tensorflow.random import set_seed
     set_seed(tf_seed)
 
 df, orig_df = load_data()
