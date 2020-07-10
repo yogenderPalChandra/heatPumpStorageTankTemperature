@@ -16,7 +16,7 @@ def load_data(fpath="./dlOne", col_names = ['Hours'] + ["T" + str(i) for i in ra
     df = pd.read_csv(fpath, 
                      header = 1, 
                      encoding = "ISO-8859-1", 
-                     sep='\t', 
+                         sep='\t', 
                      skiprows=0).dropna(axis=1).astype(float)
     df.columns = col_names
     return df.drop(columns = 'Hours'), df
@@ -215,4 +215,19 @@ def prediction_vs_truth_plot_Q_t(model, X_test, y_test, scaler, unscale=unscale,
     if out_fpath is not None:
         plt.savefig(out_fpath)
     plt.show()
+###########################
+##Yogis functions
+###########################
+
+def plotOutlier(df_orig, df_hp):
+    '''Scatter plot function
+        to assess outliers through scatter plot
+        
+    '''
+    import seaborn as sns; sns.set()
+    import matplotlib.pyplot as plt
+    df_snsScatterPlot = pd.concat([df_orig, df_hp.loc[:, ["Tamb", "KJ/hr"]]], axis=1)
+    ax = sns.scatterplot(x="Hours", y="KJ/hr", data =df_snsScatterPlot)
+    plt.show()
+    return
 
