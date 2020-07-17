@@ -120,6 +120,18 @@ def create_Q_t_model_1(X, y):
     model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
     return model
 
+##yogis Function
+def create_model_20TTambQhInput_20TOutput(X, y):
+    n_input_features = X.shape[1]
+    n_output_features = y.shape[1]
+    model = Sequential()
+    model.add(Dense(10, input_shape=(n_input_features,), activation='relu'))
+    model.add(Dense(5, input_shape=(n_input_features,), activation='relu'))
+    model.add(Dense(n_output_features, activation='linear'))
+    model.compile(loss="mean_absolute_error", optimizer="adam", metrics=["mean_squared_error"])
+    return model
+
+
 def get_callbacks(model_fpath):
     return [ ModelCheckpoint(filepath=model_fpath,
                                    monitor="val_loss",
@@ -206,7 +218,8 @@ def prediction_vs_truth_plot(model, X_test, y_test, scaler, unscale=unscale, out
 
 def prediction_vs_truth_plot_Q_t(model, X_test, y_test, scaler, unscale=unscale, out_fpath=None):
     yhat=model.predict(X_test)
-    yhat_df = pd.DataFrame({"KJ/hr": [x[0] for x in yhat]})
+    #yhat_df = pd.DataFrame({"KJ/hr": [x[0] for x in yhat]})
+    yhat_df = pd.DataFrame(yhat)
     yhat_df.index = X_test.index
     yhat_df = pd.concat([X_test, yhat_df], axis=1) # why suddenly NaN?
     ytest_df = pd.concat([X_test, pd.DataFrame(y_test)], axis=1)
@@ -230,4 +243,18 @@ def plotOutlier(df_orig, df_hp):
     ax = sns.scatterplot(x="Hours", y="KJ/hr", data =df_snsScatterPlot)
     plt.show()
     return
+
+
+def yogi_prediction_vs_truth_plot_Q_t(model, X_test, y_test, scaler, unscale=unscale, out_fpath=None):
+    yhat=model.predict(X_test)
+    #yhat_df = pd.DataFrame({"KJ/hr": [x[0] for x in yhat]})
+    yhat_df = pd.DataFrame(yhat)
+    yhat_df.index = X_test.index
+    yhat_df = pd.concat([yhat_df, X_test.iloc[:, -2:]], axis=1) # why suddenly NaN?
+    ytest_df = pd.concat([y_test, X_test.iloc[:, -2:]], axis=1)
+    y_pred_unscaled, y_test_unscaled = unscale(yhat_df, ytest_df, scaler)
+    plt.scatter(y_test_unscaled[:, 0:20], y_pred_unscaled[:, 0:20])
+    if out_fpath is not None:
+        plt.savefig(out_fpath)
+    plt.show()
 
