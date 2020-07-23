@@ -505,8 +505,8 @@ def prepare_df_X_test(model, arr, k):
     
     Tamb_Qh = [[i[-2:] for i in j ] for j in X_test.reshape(X_test.shape[0],k, n_features)]
 
-    pred=[np.array(xi) for xi in arr[1].reshape( k, n_features)]
-    pred_20T=[x[:-2] for x in flatten_row_wise(arr[1]).reshape(k,n_features)]
+    pred=[np.array(xi) for xi in arr[0].reshape( k, n_features)]
+    pred_20T=[x[:-2] for x in flatten_row_wise(arr[0]).reshape(k,n_features)]
     #print ('length of pred=',len(pred),pred)
     for i in range(k, n_rows):
 
@@ -551,8 +551,8 @@ def plot(arr_y_pred, arr_y_test, orig_df):
    legends_test =['OrgT' + str(i) for i in range (1, 23) ]
    legends_pred =['PrT' + str(i) for i in range (1, 23) ]
    for i, j in zip(df_y_pred, df_y_test):
-       plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
-       #plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
+       #plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
+       plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
 
    plt.legend()
    plt.show()

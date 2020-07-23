@@ -101,9 +101,20 @@ Xdf1, ydf1 = prepare_df(X)
 Xdf2, ydf2 = prepare_df(y)
 
 
-X_train, X_test, y_train, y_test = train_test_split(Xdf1, ydf2, test_size=0.2, random_state=42, shuffle=False)
+#X_train, X_test, y_train, y_test = train_test_split(Xdf1, ydf2, test_size=0.2, random_state=42, shuffle=False)
 #X_train, X_test, y_train, y_test = train_test_split(Xdf1, y_df1, test_size=0.2, random_state=42, shuffle=False)
 
+train_indexes, test_indexes = train_test_split_indexes(Xdf1, ydf2, test_size=0.2, random_state=42, shuffle=True)
+
+X_train, X_test, y_train, y_test = splitter(pd.DataFrame(Xdf1), pd.DataFrame(ydf2), train_indexes, test_indexes)
+
+X_train = np.array(X_train)
+
+X_test = np.array(X_test)
+
+y_train = np.array(y_train)
+
+y_test = np.array(y_test)
 
 def create_model(time_steps, n_features):
     model = Sequential()
@@ -120,13 +131,13 @@ callbacks_list = [ ModelCheckpoint(filepath=model_fpath,
                                    mode="min")]
 
 
-history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
-                    y_train.reshape(y_train.shape[0], 20),
-                    epochs=epochs,
-                    batch_size=batch_size,
-                    validation_split=0.3,
-                    callbacks = callbacks_list,
-                    verbose=1)
+    history = model.fit(X_train.reshape(X_train.shape[0], k, n_features),
+                        y_train.reshape(y_train.shape[0], 20),
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        validation_split=0.3,
+                        callbacks = callbacks_list,
+                        verbose=1)
 
 
 model.save(model_fpath)
@@ -134,25 +145,23 @@ model.save(model_fpath)
 from keras.models import load_model
 model = load_model(model_fpath)
 
-plt.scatter(y_test, yhat)
-plt.show()
 
 
 def prepare_df_X_test(model, arr, k):
-    model = load_model('20ToutPlus20TTambQhInput.h5')
+    #model = load_model('20ToutPlus20TTambQhInput.h5')
     n_rows, n_cols = arr.shape
     
     Tamb_Qh = [[i[-2:] for i in j ] for j in X_test.reshape(X_test.shape[0],k, n_features)]
 
-    pred=[np.array(xi) for xi in arr[1].reshape( k, n_features)]
-    pred_20T=[x[:-2] for x in flatten_row_wise(arr[1]).reshape(k,n_features)]
+    pred=[np.array(xi) for xi in arr[2].reshape( k, n_features)]
+    pred_20T=[x[:-2] for x in flatten_row_wise(arr[2]).reshape(k,n_features)]
     #print ('length of pred=',len(pred),pred)
     for i in range(k, n_rows):
 
         pred_shaped = flatten_row_wise(pred[i-k:i]).reshape(1, k, n_features )
         yhat=model.predict(pred_shaped)
         pred_20T.append(np.squeeze(yhat,axis=(0,)))
-        yhat_faked = np.concatenate([yhat, np.expand_dims(Tamb_Qh[i-2][-1], axis=0)], axis=1)
+        yhat_faked = np.concatenate([yhat, np.expand_dims(Tamb_Qh[i-2][-1], axis=0)], axis=1) #sanity check = done
 
         pred.append(np.squeeze(yhat_faked, axis=(0,)))
         print ('looping nex loop', i)
@@ -160,6 +169,17 @@ def prepare_df_X_test(model, arr, k):
     return pred, np.array(pred_20T)
 
 yhat_pred, yhat_20T =prepare_df_X_test(model, X_test, k)
+
+
+pred = [np.random.randint(5, size=(2, 4)), np.random.randint(3, size=(2, 4)), np.random.randint(7, size=(2, 4))]
+pred=[np.array(xi) for xi in X_train[1].reshape( k, n_features)]
+pred.append(np.random.randint(2, size=(22,)))
+pred_shaped = flatten_row_wise(pred[0:3]).reshape(1, k, n_features)
+yhat=model.predict(pred_shaped)
+Tamb_Qh = [[i[-2:] for i in j ] for j in X_test.reshape(X_test.shape[0],k, n_features)]
+yhat_faked = np.concatenate([yhat, np.expand_dims(Tamb_Qh[1][-1], axis=0)], axis=1)
+pred.append(yhat_faked)
+pred.append(np.squeeze(yhat_faked, axis=(0,))
 
 
 def unscale(y_values, scaler):
@@ -180,15 +200,21 @@ def unscale_1(df, y_values, scaler):
 y_pred_unscaled, y_test_unscaled = unscale_1(df, yhat_20T, scaler), unscale_1(df, y_test, scaler)
 
 
+plt.scatter(y_test, y_pred_unscaled)
+plt.show()
+
+
 def plot(arr_y_pred, arr_y_test, orig_df):
    xdata = orig_df.iloc[len(orig_df)-len(X_test):, 0]
    df_y_pred = pd.DataFrame(arr_y_pred)
    df_y_test = pd.DataFrame(arr_y_test) # arry_y_pred you took here!
    legends_test =['OrgT' + str(i) for i in range (1, 23) ]
    legends_pred =['PrT' + str(i) for i in range (1, 23) ]
-   for i, j in zip(df_y_pred, df_y_test):
-       plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
-       #plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
+   for k in [df_y_pred ,df_y_test ]:
+       plt.figure()
+       for i in range (0,20):
+           #plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
+           plt.plot(xdata, k.iloc[:, i], label = legends_test[i])
 
    plt.legend()
    plt.show()
@@ -197,3 +223,59 @@ def plot(arr_y_pred, arr_y_test, orig_df):
 plt.clf()
 plot(y_pred_unscaled, y_test_unscaled, orig_df)
 #plot(yhat, y_test, orig_df)
+
+
+def plot(arr_y_pred, arr_y_test, orig_df):
+   xdata = orig_df.iloc[len(orig_df)-len(X_test):, 0]
+   df_y_pred = pd.DataFrame(arr_y_pred)
+   df_y_test = pd.DataFrame(arr_y_test) # arry_y_pred you took here!
+   legends_test =['OrgT' + str(i) for i in range (1, 23) ]
+   legends_pred =['PrT' + str(i) for i in range (1, 23) ]
+   for i, j in zip(df_y_pred, df_y_test):
+       #plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
+       plt.plot(xdata, df_y_test.iloc[:, j], label = legends_test[i])
+
+   plt.legend()
+   plt.show()
+   return
+
+plt.clf()
+plot(y_pred_unscaled, y_test_unscaled, orig_df)
+#plot(yhat, y_test, orig_df)
+
+
+
+df_missing =  df.isna()
+df_missing_sum = df_missing.sum()
+df_missing_per = df_missing_sum/len(df)
+
+df.fillna(0).count() / len(df)
+
+df.isna().mean().round(4) * 100
+
+(df == 0).count()
+
+df[['T1']].apply( lambda s : s.value_counts().get(key=0,default=0), axis=1).sum() /len(df[['T1']])
+
+#df.apply( lambda s : s.value_counts().get(key=0,default=0), axis=1).sum() /len(df)
+'''
+def plot(arr_y_pred, arr_y_test, orig_df):
+   xdata = orig_df.iloc[len(orig_df)-len(X_test):, 0]
+   df_y_p1red = pd.DataFrame(arr_y_pred)
+   df_y_test = pd.DataFrame(arr_y_test) # arry_y_pred you took here!
+   legends_test =['OrgT' + str(i) for i in range (1, 23) ]
+   legends_pred =['PrT' + str(i) for i in range (1, 23) ]
+   for i in range (0,20):
+       for k in [df_y_pred ,df_y_test ]:
+           plt.figure()
+           #plt.plot(xdata, df_y_pred.iloc[:, i], label = legends_pred[i])
+           plt.plot(xdata, k.iloc[:, i], label = legends_test[i])
+
+   plt.legend()
+   plt.show()
+   return
+
+plt.clf()
+plot(y_pred_unscaled, y_test_unscaled, orig_df)
+#plot(yhat, y_test, orig_df)
+'''

@@ -269,6 +269,8 @@ plot(yhat, y_test, orig_df)
 
 
 
+
+
 print(f"Best val_loss is: {min(history.history['val_loss'])}")
 
 
