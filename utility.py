@@ -28,7 +28,7 @@ def load_data(fpath="./dlOne", col_names = ['Hours'] + ["T" + str(i) for i in ra
     return df.drop(columns = 'Hours'), df
 
 def load_dataHP(path="./Hpdata"):
-    path = "./Hpdata"
+    #path = "./Hpdata"
     col_names = ['Hours', 'Tamb', 'ThpOut', 'mLoadFlowRate', 'KJ/hr' , 'cop']
     df_hp = pd.read_csv(path, 
                      header = 1, 
@@ -43,7 +43,7 @@ def load_dataHP(path="./Hpdata"):
 def load_data_big(path="./dlone2"):
     return load_dataHP(path)
 
-def load_T1_20_with_HP()
+def load_T1_20_with_HP():
     df, df_with_Hours = load_data()
     df_hp = load_dataHP()
     new_df = pd.concat([df, df_hp], axis=1)
@@ -51,7 +51,43 @@ def load_T1_20_with_HP()
     return hours, new_df
 
 
+###############################################
+##Data with tanks heat loss
+###############################################
+'''
+def load_data_tankLoss(fpath="./dleteItTankambientloss", col_names = ['Hours'] + ["T" + str(i) for i in range(1, 21)]):
+    df = pd.read_csv(fpath, 
+                     header = 1, 
+                     encoding = "ISO-8859-1", 
+                         sep='\t', 
+                     skiprows=0).dropna(axis=1).astype(float)
+    df.columns = col_names
+    return df.drop(columns = 'Hours'), df
 
+def load_dataHP_tankLoss(path="./deleteItHpData"):
+    path = "./deleteItHpData"
+    col_names = ['Hours', 'Tamb', 'ThpOut', 'mLoadFlowRate', 'KJ/hr' , 'cop']
+    df_hp = pd.read_csv(path, 
+                     header = 1, 
+                     encoding = "ISO-8859-1", 
+                     sep='\t', 
+                     skiprows=0).dropna(axis=1).astype(float)
+    df_hp = df_hp.loc[:, df_hp.any()] # eliminates all purely NA columns!
+    df_hp.columns = col_names
+    df_hp = df_hp.drop(columns = 'Hours')
+    return df_hp
+
+def load_data_big(path="./dlone2"):
+    return load_dataHP(path)
+
+def load_T1_20_with_HP():
+    df, df_with_Hours = load_data()
+    df_hp = load_dataHP()
+    new_df = pd.concat([df, df_hp], axis=1)
+    hours = [x for x in df_with_Hours.loc[:, "Hours"]]
+    return hours, new_df
+'''
+#######################################
 #######################################
 # Data normalization functions
 #######################################

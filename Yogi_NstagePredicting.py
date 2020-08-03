@@ -146,7 +146,43 @@ from keras.models import load_model
 model = load_model(model_fpath)
 
 
+def prepare_df_X_test(model, arr, k):
+    #model = load_model('20ToutPlus20TTambQhInput.h5')
+    """
+    Dosent work! I have feeling that This algo dosent work because - Q has alot of zeros and
+    Q is used in the X, hence its not calculating weights properly. So intutively - the only
+    solution remained is to predict the Q (i.e. put Q in y). In other words, try to predict Q
+    by 20T and Tamb as X and 20 T and Q in y. this way Q would be in Y and its just mapping
+    for the y and Q has not to be in the X. this is the solution if this algo has to work
+    at all. 
 
+    """
+    n_rows, n_cols = arr.shape
+    
+    Tamb_Qh = [[i[-2:] for i in j ] for j in X_test.reshape(X_test.shape[0],k, n_features)] #sanity check done!
+    TQ= [row for row in np.array(Tamb_Qh).flatten()[6:]] #sanity check done
+    TQ_pairwise = [[np.array([TQ[l],TQ[m]])] for l, m in zip(range(0, len(TQ), 2),range(1, len(TQ),2))] #sanity check done
+    
+
+    pred=[np.array(xi) for xi in arr[0].reshape( k, n_features)] #it is definately arr[0], otherwise Q & Tamb are incorrect
+    #in TQ and TQ_pairwise
+    pred_20T=[x[:-2] for x in flatten_row_wise(arr[0]).reshape(k,n_features)] #sanity check done
+    #print ('length of pred=',len(pred),pred)
+    for i in range(k, n_rows):
+
+        pred_shaped = flatten_row_wise(pred[i-k:i]).reshape(1, k, n_features ) #sanity check done
+        yhat=model.predict(pred_shaped)
+        pred_20T.append(np.squeeze(yhat,axis=(0,)))                             #sanity check done
+        yhat_faked = np.concatenate([yhat,TQ_pairwise[i-3]], axis=1) #sanity check = done (2X)
+    
+        pred.append(np.squeeze(yhat_faked, axis=(0,)))              #sanity check done
+        print ('looping next loop', i)
+        
+    return pred, np.array(pred_20T)
+
+yhat_pred_22, yhat_20T =prepare_df_X_test(model, X_test, k)
+
+'''
 def prepare_df_X_test(model, arr, k):
     #model = load_model('20ToutPlus20TTambQhInput.h5')
     n_rows, n_cols = arr.shape
@@ -169,7 +205,7 @@ def prepare_df_X_test(model, arr, k):
     return pred, np.array(pred_20T)
 
 yhat_pred, yhat_20T =prepare_df_X_test(model, X_test, k)
-
+'''
 
 pred = [np.random.randint(5, size=(2, 4)), np.random.randint(3, size=(2, 4)), np.random.randint(7, size=(2, 4))]
 pred=[np.array(xi) for xi in X_train[1].reshape( k, n_features)]
@@ -200,8 +236,12 @@ def unscale_1(df, y_values, scaler):
 y_pred_unscaled, y_test_unscaled = unscale_1(df, yhat_20T, scaler), unscale_1(df, y_test, scaler)
 
 
-plt.scatter(y_test, y_pred_unscaled)
+plt.scatter(y_test_unscaled, y_pred_unscaled)
 plt.show()
+
+
+##plt.scatter(y_test, yhat_20T)
+##plt.show()
 
 
 def plot(arr_y_pred, arr_y_test, orig_df):
